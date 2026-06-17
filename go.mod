@@ -1,27 +1,27 @@
 module github.com/ppc64le-cloud/pvsadm
 
-go 1.24.13
+go 1.25.2
 
 require (
-	github.com/IBM-Cloud/power-go-client v1.14.4
-	github.com/IBM/go-sdk-core/v5 v5.21.2
-	github.com/IBM/ibm-cos-sdk-go v1.14.0
-	github.com/IBM/platform-services-go-sdk v0.96.0
+	github.com/IBM-Cloud/power-go-client v1.16.0
+	github.com/IBM/go-sdk-core/v5 v5.21.4
+	github.com/IBM/ibm-cos-sdk-go v1.14.1
+	github.com/IBM/platform-services-go-sdk v0.99.1
 	github.com/briandowns/spinner v1.23.2
 	github.com/charmbracelet/huh v1.0.0
-	github.com/fsnotify/fsnotify v1.9.0
-	github.com/go-openapi/strfmt v0.26.0
+	github.com/fsnotify/fsnotify v1.10.1
+	github.com/go-openapi/strfmt v0.26.3
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/klauspost/pgzip v1.2.6
 	github.com/manifoldco/promptui v0.9.0
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.39.1
+	github.com/onsi/gomega v1.41.0
 	github.com/sayotte/iscdhcp v0.0.0-20190926162140-d6be84ba9969
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
-	github.com/vbauerster/mpb/v8 v8.12.0
+	github.com/vbauerster/mpb/v8 v8.12.1
 	go.uber.org/mock v0.6.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/klog/v2 v2.140.0
@@ -80,7 +80,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
-	github.com/mattn/go-runewidth v0.0.20 // indirect
+	github.com/mattn/go-runewidth v0.0.23 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
@@ -100,12 +100,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/net v0.50.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/term v0.40.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/crypto v0.51.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/term v0.43.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
