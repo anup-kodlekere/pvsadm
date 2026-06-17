@@ -29,7 +29,7 @@ var (
 	hostPartitions = []string{"/proc", "/dev", "/sys", "/var/run/", "/etc/machine-id"}
 )
 
-// prepare is a function prepares the CentOS or RHEL image for capturing, this includes
+// prepare is a function prepares the CentOS, RHEL, or Ubuntu image for capturing, this includes
 // - Installs the cloud-init
 // - Install and configure multipath for rootfs
 // - Install all the required modules for PowerVM
@@ -45,6 +45,9 @@ func prepare(mnt, volume, dist, rhnuser, rhnpasswd, rootpasswd string) error {
 	if err != nil {
 		return err
 	}
+
+	// kpartx -av noble-server-cloudimg-ppc64el.raw
+	
 
 	partition, err := getPartition(lo)
 	if err != nil {
@@ -134,7 +137,11 @@ func prepare(mnt, volume, dist, rhnuser, rhnpasswd, rootpasswd string) error {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(mnt, "/etc/cloud/cloud.cfg"), []byte(CloudConfig), 0644)
+	cloudConfigStr, err := RenderCloudConfig(dist)
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(filepath.Join(mnt, "/etc/cloud/cloud.cfg"), []byte(cloudConfigStr), 0644)
 	if err != nil {
 		return err
 	}
@@ -176,7 +183,7 @@ func Prepare4capture(mnt, volume, dist, rhnuser, rhnpasswd, rootpasswd string) e
 	//}
 	//defer os.Chdir(cwd)
 	switch dist := strings.ToLower(dist); dist {
-	case "rhel", "centos":
+	case "rhel", "centos", "ubuntu":
 		return prepare(mnt, volume, dist, rhnuser, rhnpasswd, rootpasswd)
 	case "coreos":
 		klog.Info("No image preparation required for the coreos.")

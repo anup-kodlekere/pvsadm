@@ -46,6 +46,12 @@ func TestRender(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "ubuntu image",
+			args:    args{dist: "ubuntu", rootpasswd: "some-password"},
+			want:    "apt-get",
+			wantErr: false,
+		},
+		{
 			name:    "rhel image without root password",
 			args:    args{dist: "rhel", rhnuser: "rhn", rhnpasswd: "rhnpassword"},
 			want:    "subscription-manager",

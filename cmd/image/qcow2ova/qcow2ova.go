@@ -48,13 +48,16 @@ Examples:
   # Converts the RHEL image from local filesystem
   pvsadm image qcow2ova --image-name rhel-82-29oct --image-dist rhel --rhn-user joesmith@example.com --rhn-password someValidPassword --image-url ./rhel-8.2-update-2-ppc64le-kvm.qcow2
 
+  # Converts the Ubuntu image from local filesystem
+  pvsadm image qcow2ova --image-name ubuntu-2004 --image-dist ubuntu --image-url ./ubuntu-20.04-server-cloudimg-ppc64el.img
+
   # Converts the CentOS image from the local filesystem with OS password set
   pvsadm image qcow2ova --image-name centos-82 --image-dist centos --os-password s0meC0mplexPassword --image-url /root/CentOS-8-GenericCloud-8.2.2004-20200611.2.ppc64le.qcow2
 
   # Converts the CentOS image from the local filesystem without OS password
   pvsadm image qcow2ova --image-name centos-82 --image-dist centos  --image-url /root/CentOS-8-GenericCloud-8.2.2004-20200611.2.ppc64le.qcow2 --skip-os-password
 
-  # Customize the image preparation script for RHEL/CentOS distro, e.g: add additional yum repository or packages, change name servers etc. 
+  # Customize the image preparation script for RHEL/CentOS/Ubuntu distro, e.g: add additional repository or packages, change name servers etc. 
   # Step 1 - Dump the default image preparation template
   pvsadm image qcow2ova --prep-template-default > image-prep.template
   # Step 2 - Make the necessary changes to the above generated template file(bash shell script) - image-prep.template
@@ -76,6 +79,7 @@ Qcow2 images location:
   # CentOS 9:     https://cloud.centos.org/centos/9-stream/ppc64le/images/
   # Old Centos:   https://cloud.centos.org/centos/8/ppc64le/images/
   # RHEL image:   https://access.redhat.com/downloads/content/279/ver=/rhel---8/8.3/ppc64le/product-software 
+  # Ubuntu images: https://cloud-images.ubuntu.com/
   # RHCOS images: https://mirror.openshift.com/pub/openshift-v4/ppc64le/dependencies/rhcos/
 
 `,
@@ -113,8 +117,8 @@ Qcow2 images location:
 			prep.CloudConfig = string(content)
 
 		}
-		if !utils.Contains([]string{"rhel", "centos", "coreos"}, strings.ToLower(opt.ImageDist)) {
-			klog.Errorln("--image-dist is a mandatory flag and one of these [rhel, centos, coreos]")
+		if !utils.Contains([]string{"rhel", "centos", "coreos", "ubuntu"}, strings.ToLower(opt.ImageDist)) {
+			klog.Errorln("--image-dist is a mandatory flag and one of these [rhel, centos, coreos, ubuntu]")
 			os.Exit(1)
 		}
 
@@ -292,12 +296,12 @@ Qcow2 images location:
 func init() {
 	Cmd.Flags().StringVar(&pkg.ImageCMDOptions.ImageName, "image-name", "", "Name of the resultant OVA image")
 	Cmd.Flags().StringVar(&pkg.ImageCMDOptions.ImageURL, "image-url", "", "URL or absolute local file path to the <QCOW2>.gz image")
-	Cmd.Flags().StringVar(&pkg.ImageCMDOptions.ImageDist, "image-dist", "", "Image Distribution(supported: rhel, centos, coreos)")
+	Cmd.Flags().StringVar(&pkg.ImageCMDOptions.ImageDist, "image-dist", "", "Image Distribution(supported: rhel, centos, coreos, ubuntu)")
 	Cmd.Flags().Uint64Var(&pkg.ImageCMDOptions.ImageSize, "image-size", 11, "Size (in GB) of the resultant OVA image")
 	Cmd.Flags().Int64Var(&pkg.ImageCMDOptions.TargetDiskSize, "target-disk-size", 120, "Size (in GB) of the target disk volume where OVA will be copied")
 	Cmd.Flags().StringVar(&pkg.ImageCMDOptions.RHNUser, "rhn-user", "", "RedHat Subscription username. Required when Image distribution is rhel")
 	Cmd.Flags().StringVar(&pkg.ImageCMDOptions.RHNPassword, "rhn-password", "", "RedHat Subscription password. Required when Image distribution is rhel")
-	Cmd.Flags().StringVar(&pkg.ImageCMDOptions.OSPassword, "os-password", "", "Root user password, will auto-generate the 12 bits password(applicable only for redhat and cento distro)")
+	Cmd.Flags().StringVar(&pkg.ImageCMDOptions.OSPassword, "os-password", "", "Root user password, will auto-generate the 12 bits password(applicable only for redhat, centos, and ubuntu distros)")
 	Cmd.Flags().StringVarP(&pkg.ImageCMDOptions.TempDir, "temp-dir", "t", os.TempDir(), "Scratch space to use for OVA generation")
 	Cmd.Flags().StringVar(&pkg.ImageCMDOptions.PrepTemplate, "prep-template", "", "Image preparation script template, use --prep-template-default to print the default template(supported distros: rhel and centos)")
 	Cmd.Flags().BoolVar(&pkg.ImageCMDOptions.PrepTemplateDefault, "prep-template-default", false, "Prints the default image preparation script template, use --prep-template to set the custom template script(supported distros: rhel and centos)")

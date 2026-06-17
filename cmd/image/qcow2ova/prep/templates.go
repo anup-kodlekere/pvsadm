@@ -28,29 +28,63 @@ set -o pipefail
 
 mv /etc/resolv.conf /etc/resolv.conf.orig || true
 echo "nameserver 9.9.9.9" | tee /etc/resolv.conf
+
 {{if eq .Dist "rhel"}}
 subscription-manager register --force --auto-attach --username={{ .RHNUser }} --password={{ .RHNPassword }}
-{{end}}
-{{if .RootPasswd }}
-echo {{ .RootPasswd }} | passwd root --stdin
-{{end}}
 yum update -y && yum install -y yum-utils
 yum install -y cloud-init
+{{end}}
+
+{{ if eq .Dist "ubuntu" }}
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get -y upgrade
+apt-get -y install cloud-init multipath-tools
+{{ end }}
+
+{{ if .RootPasswd }}
+{{ if or (eq .Dist "rhel") (eq .Dist "centos") }}
+echo {{ .RootPasswd }} | passwd root --stdin
+{{ end }}
+{{ if eq .Dist "ubuntu" }}
+echo "root:{{ .RootPasswd }}" | chpasswd
+{{ end }}
+{{ end }}
+
+{{if or (eq .Dist "rhel") (eq .Dist "centos")}}
 yum reinstall grub2-common -y
 rm -rf /etc/systemd/system/multi-user.target.wants/firewalld.service
+{{end}}
+
+{{if eq .Dist "ubuntu"}}
+apt install --reinstall grub-common
+{{end}}
+
+{{if or (eq .Dist "rhel") (eq .Dist "centos")}}
 rpm -vih --nodeps https://public.dhe.ibm.com/software/server/POWER/Linux/yum/download/ibm-power-repo-latest.noarch.rpm
+{{end}}
 sed -i 's/^more \/opt\/ibm\/lop\/notice/#more \/opt\/ibm\/lop\/notice/g' /opt/ibm/lop/configure
 echo 'y' | /opt/ibm/lop/configure
+
 {{if eq .Dist "rhel"}}
 # Disable the AT repository due to slowness in nature
 yum-config-manager --disable Advance_Toolchain
 {{end}}
+
 {{if eq .Dist "centos"}}
 yum-config-manager --add-repo=https://public.dhe.ibm.com/software/server/POWER/Linux/yum/IBM/RHEL/$(rpm -E %{rhel})/ppc64le/
 rpm --import https://public.dhe.ibm.com/software/server/POWER/Linux/yum/IBM/RHEL/$(rpm -E %{rhel})/ppc64le/repodata/repomd.xml.key
 {{end}}
+
+{{if or (eq .Dist "rhel") (eq .Dist "centos")}}
 yum install  powerpc-utils librtas DynamicRM  devices.chrp.base.ServiceRM rsct.opt.storagerm rsct.core rsct.basic rsct.core src -y
 yum install -y device-mapper-multipath
+{{end}}
+
+{{if eq .Dist "ubuntu"}}
+apt install -y powerpc-utils librtas
+{{end}}
+
 cat <<EOF > /etc/multipath.conf
 defaults {
     user_friendly_names yes
@@ -65,8 +99,10 @@ defaults {
     find_multipaths smart
 }
 EOF
+
 sed -i 's/GRUB_TIMEOUT=.*$/GRUB_TIMEOUT=60/g' /etc/default/grub
 sed -i 's/GRUB_CMDLINE_LINUX=.*$/GRUB_CMDLINE_LINUX="console=tty0 console=hvc0,115200n8  biosdevname=0  crashkernel=auto rd.shell rd.debug rd.driver.pre=dm_multipath log_buf_len=1M "/g' /etc/default/grub
+{{if or (eq .Dist "rhel") (eq .Dist "centos")}}
 echo 'force_drivers+=" dm-multipath "' >/etc/dracut.conf.d/10-mp.conf
 dracut --regenerate-all --force
 for kernel in $(rpm -q kernel | sort -V | sed 's/kernel-//')
@@ -74,18 +110,35 @@ do
 	echo "Generating initramfs for kernel version: ${kernel}"
 	dracut --kver ${kernel} --force --add multipath --include /etc/multipath /etc/multipath --include /etc/multipath.conf /etc/multipath.conf
 done
+{{end}}
+
+{{if eq .Dist "ubuntu"}}
+update-initramfs -u
+{{end}}
+
+{{if or (eq .Dist "rhel") (eq .Dist "centos")}}
 grub2-mkconfig -o /boot/grub2/grub.cfg
 rm -rf /etc/sysconfig/network-scripts/ifcfg-eth0
+{{end}}
+
+{{if eq .Dist "ubuntu"}}
+update-grub
+{{end}}
+
 {{if eq .Dist "rhel"}}
 subscription-manager unregister
 subscription-manager clean
 {{end}}
 
+{{if or (eq .Dist "rhel") (eq .Dist "centos")}}
 # Remove the ibm repositories used for the rsct installation
 rpm -e ibm-power-repo-*.noarch
+{{end}}
 
 mv /etc/resolv.conf.orig /etc/resolv.conf || true
+{{if or (eq .Dist "rhel") (eq .Dist "centos")}}
 touch /.autorelabel
+{{end}}
 `
 
 var CloudConfig = `# latest file from cloud-init-22.1-1.el8.noarch
@@ -176,13 +229,13 @@ runcmd:
 
 system_info:
   default_user:
-    name: cloud-user
+    name: {{if eq .Dist "ubuntu"}}ubuntu{{else}}cloud-user{{end}}
     lock_passwd: true
     gecos: Cloud User
     groups: [adm, systemd-journal]
     sudo: ["ALL=(ALL) NOPASSWD:ALL"]
     shell: /bin/bash
-  distro: rhel
+  distro: {{.Dist}}
   paths:
     cloud_dir: /var/lib/cloud
     templates_dir: /etc/cloud/templates
@@ -215,6 +268,19 @@ func Render(dist, rhnuser, rhnpasswd, rootpasswd string) (string, error) {
 	err := t.Execute(&wr, s)
 	if err != nil {
 		return "", fmt.Errorf("error while rendoring the script template: %v", err)
+	}
+	return wr.String(), nil
+}
+
+func RenderCloudConfig(dist string) (string, error) {
+	s := Setup{
+		Dist: dist,
+	}
+	var wr bytes.Buffer
+	t := template.Must(template.New("cloud").Parse(CloudConfig))
+	err := t.Execute(&wr, s)
+	if err != nil {
+		return "", fmt.Errorf("error while rendering the cloud config template: %v", err)
 	}
 	return wr.String(), nil
 }
